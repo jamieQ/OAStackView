@@ -489,6 +489,28 @@ describe(@"OAStackView", ^{
           [[theValue(firstGap) should] beBetween:theValue(stackView.spacing) and:theValue(CGRectGetHeight(stackView.bounds))];
         });
       });
+
+      context(@"OAStackViewDistributionEqualCentering", ^{
+        it(@"Distributes the views with equal spacing between each view's center", ^{
+          // Views 1, 2 and 3 are UIButtons. Changing the title affects their intrinsicContentSize.
+
+          [(UIButton *)view1 setTitle:@"A short title" forState:UIControlStateNormal];
+          [(UIButton *)view2 setTitle:@"A bit\n longer\n title" forState:UIControlStateNormal];
+          [(UIButton *)view3 setTitle:@"A \nreally\n really\n really\n really\n long\n title"
+                             forState:UIControlStateNormal];
+
+          stackView.distribution = OAStackViewDistributionEqualCentering;
+          stackView.spacing = 40;
+
+          layoutView(stackView);
+
+          CGFloat firstGap = CGRectGetMidY(view2.frame) - CGRectGetMidY(view1.frame);
+          CGFloat secondGap = CGRectGetMidY(view3.frame) - CGRectGetMidY(view2.frame);
+          [[theValue(firstGap) should] equal:theValue(secondGap)];
+          [[theValue(firstGap) should] beBetween:theValue(stackView.spacing) and:theValue(CGRectGetHeight(stackView.bounds))];
+        });
+      });
+
     });
     
   });
@@ -940,6 +962,27 @@ describe(@"OAStackView", ^{
           [[theValue(firstGap) should] equal:theValue(secondGap)];
           [[theValue(firstGap) should] beBetween:theValue(stackView.spacing)
                                              and:theValue(CGRectGetWidth(stackView.bounds))];
+        });
+      });
+
+      context(@"OAStackViewDistributionEqualCentering", ^{
+        it(@"Distributes the views with equal spacing between each view's center", ^{
+          // Views 1, 2 and 3 are UIButtons. Changing the title affects their intrinsicContentSize.
+
+          [(UIButton *)view1 setTitle:@"A short title" forState:UIControlStateNormal];
+          [(UIButton *)view2 setTitle:@"A bit longer title" forState:UIControlStateNormal];
+          [(UIButton *)view3 setTitle:@"A really really really really long title"
+                             forState:UIControlStateNormal];
+
+          stackView.distribution = OAStackViewDistributionEqualCentering;
+          stackView.spacing = 40;
+
+          layoutView(stackView);
+
+          CGFloat firstGap = CGRectGetMidX(view2.frame) - CGRectGetMidX(view1.frame);
+          CGFloat secondGap = CGRectGetMidX(view3.frame) - CGRectGetMidX(view2.frame);
+          [[theValue(firstGap) should] equal:theValue(secondGap)];
+          [[theValue(firstGap) should] beBetween:theValue(stackView.spacing) and:theValue(CGRectGetWidth(stackView.bounds))];
         });
       });
 

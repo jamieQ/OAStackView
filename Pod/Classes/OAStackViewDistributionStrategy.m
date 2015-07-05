@@ -313,6 +313,134 @@
 
 @end
 
+@interface OAStackViewDistributionStrategyEqualCentering ()
+
+@property (nonatomic, strong) NSMutableArray *equalCenteringLayoutGuides;
+
+@end
+
 @implementation OAStackViewDistributionStrategyEqualCentering
+
+- (NSLayoutAttribute)spanningAttributeForAxis:(UILayoutConstraintAxis)axis
+                                isLayoutGuide:(BOOL)isLayoutGuide
+                                  isFirstItem:(BOOL)isFirstItem
+{
+  switch (axis) {
+    case UILayoutConstraintAxisHorizontal:
+      if (isLayoutGuide) {
+        return isFirstItem ? NSLayoutAttributeLeading : NSLayoutAttributeTrailing;
+      } else {
+        return NSLayoutAttributeCenterX;
+      }
+
+    case UILayoutConstraintAxisVertical:
+      if (isLayoutGuide) {
+        return isFirstItem ? NSLayoutAttributeTop : NSLayoutAttributeBottom;
+      } else {
+        return NSLayoutAttributeCenterY;
+      }
+  }
+}
+
+- (NSLayoutAttribute)spacingAttributeForAxis:(UILayoutConstraintAxis)axis
+{
+  switch (axis) {
+    case UILayoutConstraintAxisHorizontal:
+      return NSLayoutAttributeWidth;
+
+      case UILayoutConstraintAxisVertical:
+      return NSLayoutAttributeHeight;
+  }
+}
+
+- (NSMutableArray *)equalCenteringLayoutGuides
+{
+  if (!_equalCenteringLayoutGuides) {
+    _equalCenteringLayoutGuides = [NSMutableArray array];
+  }
+
+  return _equalCenteringLayoutGuides;
+}
+
+- (NSString *)symbolicSpacingRelation
+{
+  return @">=";
+}
+
+- (void)alignMiddleView:(UIView *)view afterView:(UIView *)previousView
+{
+  [super alignMiddleView:view afterView:previousView];
+
+  _OALayoutGuide *guide = [_OALayoutGuide new];
+  [self.equalCenteringLayoutGuides addObject:guide];
+  [self.stackView addSubview:guide];
+
+  NSMutableArray *newConstraints = [NSMutableArray array];
+
+  UILayoutConstraintAxis axis = self.stackView.axis;
+
+  NSLayoutConstraint *firstEdgeConstraint =
+  [NSLayoutConstraint constraintWithItem:guide
+                               attribute:[self spanningAttributeForAxis:axis
+                                                          isLayoutGuide:YES
+                                                            isFirstItem:YES]
+                               relatedBy:NSLayoutRelationEqual
+                                  toItem:previousView
+                               attribute:[self spanningAttributeForAxis:axis
+                                                          isLayoutGuide:NO
+                                                            isFirstItem:YES]
+                              multiplier:1
+                                constant:0];
+
+  NSLayoutConstraint *secondEdgeConstraint =
+  [NSLayoutConstraint constraintWithItem:view
+                               attribute:[self spanningAttributeForAxis:axis
+                                                          isLayoutGuide:NO
+                                                            isFirstItem:NO]
+                               relatedBy:NSLayoutRelationEqual
+                                  toItem:guide
+                               attribute:[self spanningAttributeForAxis:axis
+                                                          isLayoutGuide:YES
+                                                            isFirstItem:NO]
+                              multiplier:1
+                                constant:0];
+
+  [newConstraints addObjectsFromArray:@[firstEdgeConstraint, secondEdgeConstraint]];
+
+  id firstGuide = self.equalCenteringLayoutGuides.firstObject;
+  if (firstGuide != guide) {
+    NSLayoutConstraint *equalDimension =
+    [NSLayoutConstraint constraintWithItem:firstGuide
+                                 attribute:[self equalityAxis]
+                                 relatedBy:NSLayoutRelationEqual
+                                    toItem:guide
+                                 attribute:[self equalityAxis]
+                                multiplier:1
+                                  constant:0];
+
+    NSUInteger gapCount = self.equalCenteringLayoutGuides.count;
+    if (gapCount > 1) {
+      float const OAEqualCenteringLayoutPriority = 150;
+      equalDimension.priority = MAX(OAEqualCenteringLayoutPriority - gapCount + 1,
+                                    UILayoutPriorityFittingSizeLevel);
+    }
+
+    equalDimension.identifier = @"OA-fill-equally";
+
+    [newConstraints addObject:equalDimension];
+  }
+
+  [self.constraints addObjectsFromArray:newConstraints];
+  [self.stackView addConstraints:newConstraints];
+}
+
+- (void)removeAddedConstraints
+{
+  [self.stackView removeConstraints:self.constraints];
+  [self.constraints removeAllObjects];
+
+  [self.equalCenteringLayoutGuides makeObjectsPerformSelector:@selector(removeFromSuperview)];
+  [self.equalCenteringLayoutGuides removeAllObjects];
+}
 
 @end
